@@ -1,0 +1,60 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Debug",
+        "formDescription": "Formulaire pour s'entraîner au debug",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Quel est votre nom ?",
+              "placeholder": "Patrick"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        40,
+        -20
+      ],
+      "id": "027f371d-2d29-4ec9-ac19-49f4d00cec8d",
+      "name": "On form submission",
+      "webhookId": "5f5f02b9-0e0d-476a-a3cc-718c4d502025"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Loop over input items and add a new field called 'myNewField' to the JSON of each one\nitem =  _input.first()\nfull_name = item.json.get(\"Quel est votre nom ?\")\nitem.json.first_name = full_name.split()[0]\nitem.json.last_name = full_name.split()[1]\n\nreturn _input.first()"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        -20
+      ],
+      "id": "bed03d39-599d-421c-997f-08efa8360a71",
+      "name": "Code"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9f0fe684d5b399874e5bb42228316888457c677ebdc340a6ef3a5239049e930e"
+  }
+}

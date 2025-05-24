@@ -1,0 +1,205 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Basé sur le contenu de l'email ci-dessous, retourne moi le nom d'un tag que tu donnerais pour catégoriser cet e-mail.\n\nTu dois absolument choisir entre ces 4 tags. Si aucun tag ne te semble correspondre, retourne le tag \"Other\".\n\n- Newsletter\n- Promotion\n- Business\n- Spam\n\nRépond uniquement avec le nom du tag et rien d'autre.\n\nVoici le contenu de l'email :\n{{ $json.data }}\n\n\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        100,
+        -20
+      ],
+      "id": "4feae002-5a1d-4f49-886e-96f0b9b96bf5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "mistral:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "2907061f-dd4d-46dd-8dda-df3bd60b4a92",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "Snpp1s8UvOdkwKQO",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -340,
+        -20
+      ],
+      "id": "a1727a53-0a1a-4df2-a9a2-cf8ea8a59507",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "eIF9OSbbVT5stl85",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "data",
+              "cssSelector": "body",
+              "skipSelectors": "a,img"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -120,
+        -20
+      ],
+      "id": "5254c157-8cca-44c1-bd61-70cdb09edabb",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PGmTiXCj7mWacuQi",
+          "mode": "list",
+          "cachedResultName": "Get or create label in Gmail"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        476,
+        -20
+      ],
+      "id": "f2748cb7-0f0c-4c04-b0b5-39800b02c53f",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "addLabels",
+        "threadId": "={{ $('Gmail Trigger').item.json.threadId }}",
+        "labelIds": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        696,
+        -20
+      ],
+      "id": "cd5de211-0f20-4d13-8fb9-39684434057d",
+      "name": "Gmail",
+      "webhookId": "5c7deeac-41f2-4a97-8e73-f2d4598bf3e6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "eIF9OSbbVT5stl85",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9f0fe684d5b399874e5bb42228316888457c677ebdc340a6ef3a5239049e930e"
+  }
+}

@@ -1,0 +1,510 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on this title, determine if this article is about programming :\n{{ $json.title }}\n\nRespond exactly with only with \"yes\" or \"no\", nothing more."
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1780,
+        -380
+      ],
+      "id": "0c26d8a5-90d5-48f8-873c-181ab672c211",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1868,
+        -160
+      ],
+      "id": "35e06f98-b08b-4f95-90af-0ff0b05c8b0d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "io2GbBiEFl7Ch20A",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        2376,
+        -255
+      ],
+      "id": "b8384591-9d69-45ce-a628-9ab4aed6ab67",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f37f842d-6b44-4be1-bb28-406460ea2818",
+              "name": "is_about_programming",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2156,
+        -380
+      ],
+      "id": "c5c2d1ea-82ff-49b8-9ab4-067bf78f432f",
+      "name": "Change name of attribute"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "859a7327-62af-4e84-b736-7855f2383202",
+              "leftValue": "={{ $json.is_about_programming }}",
+              "rightValue": "yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        2596,
+        -255
+      ],
+      "id": "e0c511c8-5660-4449-b316-88600c42e1a2",
+      "name": "Keep only articles about programming"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        -255
+      ],
+      "id": "3c9faf01-04ec-401b-9023-b6b5cb60a2a7",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Loop over input items and add a new field called 'myNewField' to the JSON of each one\n\nhtml = []\n\nfor item in _input.all():\n  link = f\"\"\"<p><a href='{item.json.link}'>{item.json.title}</a></p>\n\n  <p>{item.json.response.text}</p>\n  \"\"\"\n  \n  html.append(link)\n\noutput = {\n  \"data\": \"\".join(html)\n}\n\nreturn output"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4072,
+        -255
+      ],
+      "id": "ac6c7002-159e-4d54-93bd-ebfb44cccc7a",
+      "name": "Create HTML output"
+    },
+    {
+      "parameters": {
+        "sendTo": "houdon.thibault@gmail.com",
+        "subject": "Résumé quotidien Y Combinator",
+        "message": "=<h2>Voici les nouvelles du jour sur Y Combinator</h2>\n{{ $json.data }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        4292,
+        -255
+      ],
+      "id": "2139e34b-e1a5-4959-8db3-9f2718a7c1bd",
+      "name": "Send Daily E-mail",
+      "webhookId": "7070c56a-e418-4949-a3b0-bd55160a3a0e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UR2ofwBSCojoZ4dm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://news.ycombinator.com/rss",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        1340,
+        -255
+      ],
+      "id": "a52ce6d5-577c-46e8-9ef2-9988887d5c01",
+      "name": "Get Y Combinator RSS Feed"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        -255
+      ],
+      "id": "9a3d28e4-f9e5-4585-984d-0074b12a9608",
+      "name": "Limit to 10 articles"
+    },
+    {
+      "parameters": {
+        "method": "=GET",
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2816,
+        -380
+      ],
+      "id": "309639ab-3385-4683-b20c-5ba16e7d461a",
+      "name": "HTTP Request",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "chunkSize": 10000,
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "Écris un résumé concis de ce qui suit :\n\n\n\"{text}\"\n\n\nRÉSUMÉ CONCIS:",
+              "prompt": "Écris un résumé concis de ce qui suit :\n\n\n\"{text}\"\n\n\nRÉSUMÉ CONCIS:"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        3476,
+        -380
+      ],
+      "id": "d73999a9-801f-4960-af16-65a731043940",
+      "name": "Summarization Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3564,
+        -160
+      ],
+      "id": "716b6f4c-18fc-4581-839d-9ba93b0a8f67",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "io2GbBiEFl7Ch20A",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "data",
+              "cssSelector": "body",
+              "skipSelectors": "img,nav"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        3256,
+        -380
+      ],
+      "id": "666c0d22-377e-4994-b0c4-95a821400189",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        3852,
+        -255
+      ],
+      "id": "c6e13a7c-bf3e-4dce-918a-6bc399829121",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4b4813e-b253-46ca-adb8-85c84b8e0fbf",
+              "name": "data",
+              "value": "={{ $json.data || 'La page web a retourné une erreur. Aucun résumé possible.' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3036,
+        -380
+      ],
+      "id": "6c75c847-8ce1-4061-986d-5e09f95e8c9f",
+      "name": "Create Data Field"
+    }
+  ],
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Change name of attribute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Keep only articles about programming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Change name of attribute": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep only articles about programming": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Y Combinator RSS Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HTML output": {
+      "main": [
+        [
+          {
+            "node": "Send Daily E-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Y Combinator RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "Limit to 10 articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit to 10 articles": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Create Data Field",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Summarization Chain": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Summarization Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Create HTML output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Data Field": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9f0fe684d5b399874e5bb42228316888457c677ebdc340a6ef3a5239049e930e"
+  }
+}

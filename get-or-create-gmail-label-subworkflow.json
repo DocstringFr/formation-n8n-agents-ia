@@ -1,0 +1,227 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "label",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1000,
+        140
+      ],
+      "id": "6ae4c254-86c0-45cc-9f5b-fcc856a82dab",
+      "name": "Get All Labels from Gmail",
+      "webhookId": "08f30928-8342-4716-873a-12e85d1b4aa7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UR2ofwBSCojoZ4dm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "name",
+              "renameField": true,
+              "outputFieldName": "existing_labels"
+            },
+            {
+              "fieldToAggregate": "id"
+            },
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        40
+      ],
+      "id": "28fc7519-45c6-4445-9995-3ad3099e3d81",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "resource": "label",
+        "operation": "create",
+        "name": "={{ $('When Executed by Another Workflow').item.json.data.trim() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -120,
+        140
+      ],
+      "id": "01a080ef-7a63-4602-ab89-7306a9f4c907",
+      "name": "Create Label",
+      "webhookId": "64a98d4e-82c9-4309-b65c-75603af746e2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UR2ofwBSCojoZ4dm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a271c3b4-6efc-4573-8267-60cd919b03e9",
+              "leftValue": "={{ $json.existing_labels }}",
+              "rightValue": "={{ $json.output[0].trim() }}",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -340,
+        40
+      ],
+      "id": "23dc38a9-3d97-47a5-887a-1b3202698a3b",
+      "name": "Check if label exists"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Loop over input items and add a new field called 'myNewField' to the JSON of each one\nlabels = _json[\"existing_labels\"]\nids = _json[\"id\"]\ntag_name = _json[\"output\"][0].strip()\n\ntry:\n  index = labels.index(tag_name)\n  return {\"id\": ids[index]}\nexcept ValueError:\n  return {}\n\nreturn {}\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        -60
+      ],
+      "id": "a291272c-285f-4af2-a2e8-77aaa25523c3",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1280,
+        20
+      ],
+      "id": "afb13ddf-3112-4bca-8f08-b0db27fa88c0",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -780,
+        40
+      ],
+      "id": "ff08bf0e-13d2-45cc-9315-d14919439b35",
+      "name": "Merge"
+    }
+  ],
+  "connections": {
+    "Get All Labels from Gmail": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Check if label exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if label exists": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get All Labels from Gmail",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "output": " Business"
+      }
+    ]
+  },
+  "meta": {
+    "instanceId": "9f0fe684d5b399874e5bb42228316888457c677ebdc340a6ef3a5239049e930e"
+  }
+}
